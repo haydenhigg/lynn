@@ -26,3 +26,9 @@ An advantage actor critic (A2C) harness for a `*Bernoulli` model.
 - `(*RL).Reward(reward float64)`: apply a reward to all actions taken since the last reward
 
 ***Note**: The critic's learning rate should be lower than the actor's.*
+
+## To-Do
+
+- [ ] Build `Multinomial`
+- [ ] Add vanilla RL in addition to A2C
+- [ ] Set up a test with chrys/anthemum
