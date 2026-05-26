@@ -70,23 +70,23 @@ func (m *Multinomial) Feed(xs []float64) []float64 {
 	return outputs
 }
 
-func (m *Multinomial) Prob(xs []float64) []float64 {
-	ps := make([]float64, m.K)
-	sum := 0.
-	for i, y := range m.Feed(xs) {
-		ps[i] = math.Exp(y)
-		sum += ps[i]
-	}
+// func (m *Multinomial) Prob(xs []float64) []float64 {
+// 	ps := make([]float64, m.K)
+// 	sum := 0.
+// 	for i, y := range m.Feed(xs) {
+// 		ps[i] = math.Exp(y)
+// 		sum += ps[i]
+// 	}
 
-	for i := range m.K {
-		ps[i] /= sum
-	}
+// 	for i := range m.K {
+// 		ps[i] /= sum
+// 	}
 
-	return ps
-}
+// 	return ps
+// }
 
-func (m *Multinomial) Step(ds []float64, xs []float64) {
-	for j, model := range m.Models {
-		model.Step(ds[j], xs)
-	}
-}
+// func (m *Multinomial) Step(ds []float64, xs []float64) {
+// 	for j, model := range m.Models {
+// 		model.Step(ds[j], xs)
+// 	}
+// }
