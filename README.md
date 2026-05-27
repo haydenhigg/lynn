@@ -14,36 +14,42 @@ The simplest linear model -- multiple inputs, one output.
 
 ***Note**: Remember to normalize or standardize your input features.*
 
-### Block
+### Layer
 
-A layer of Units -- multiple inputs, multiple outputs.
+A layer is a parellel group of Units -- multiple inputs, multiple outputs.
 
-- `NewBlock(k, n int, learningRate float64) *Block` (k is the number of outputs, n is the number of inputs)
-- `(*Block).Feed(xs []float64) float64`: get the raw output of the model
-- `(*Block).Step(blockDelta float64, deltas float64, xs []float64)`: ascend the gradient where `blockDelta` is the coefficient of all gradients and `deltas` are the coefficients of the gradients for each Unit
+- `NewLayer(k, n int, learningRate float64) *Layer` (k is the number of outputs, n is the number of inputs)
+- `(*Layer).Feed(xs []float64) float64`: get the raw output of the model
+- `(*Layer).Step(blockDelta float64, deltas float64, xs []float64)`: ascend the gradient where `blockDelta` is the coefficient of all gradients and `deltas` are the coefficients of the gradients for each Unit
 
-## Logit Transformations
+## Logits
 
-Two functions are provided to create logit models from Units or Blocks.
+Two functions are provided to create logit models from a Unit or Layer.
 
 - `Sigmoid(z float64) float64`
 - `Softmax(zs []float64) float64`
 
-## Training
+## Reinforcement Learning
 
 ### RL
 
-An advantage actor critic (A2C) harness for a Block.
+A vanilla REINFORCE-style harness for a Layer.
 
-- `NewRL(k, n int, actorLearningRate, criticLearningRate float64) *RL`  (k is the number of outputs, n is the number of inputs)
-- `(*RL).Act(state []float64) int`: get an action (0-`K`)
+- `NewRL(policy *Layer) *RL`
+- `(*RL).Act(state []float64) int`: choose an action in the range `[0, k - 1]`
 - `(*RL).Reward(reward float64)`: apply a reward to all actions taken since the last reward
 
-***Note**: The critic's learning rate should be lower than the actor's.*
+### A2C
 
-***Note**: Input regularization is still necessary.*
+An advantage actor critic (A2C) harness for a Layer.
+
+- `NewA2C(policy *Layer, critic *Unit) *A2C`
+- `(*A2C).Act(state []float64) int`: choose an action in the range `[0, k - 1]`
+- `(*A2C).Reward(reward float64)`: apply a reward to all actions taken since the last reward minus the expected reward from that state
+
+***Note**: The critic and the actor should have the same number of input dimensions `n`. The critic's learning rate should be smaller than the actor's.*
 
 ## To-Do
 
-- [ ] Add vanilla RL in addition to A2C
 - [ ] Set up a test with chrys/anthemum
+- [ ] Add the Adam optimizer

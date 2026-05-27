@@ -3,14 +3,13 @@ package lynn
 import "math/rand"
 
 type Unit struct {
-	N            int
 	Weights      []float64
 	Bias         float64
 	LearningRate float64
 }
 
 func New(n int, learningRate float64) *Unit {
-	weights := make([]float64, n)
+	weights := make([]float64, max(n, 0))
 
 	for i := range n {
 		weights[i] = rand.NormFloat64()
@@ -18,45 +17,49 @@ func New(n int, learningRate float64) *Unit {
 
 	bias := rand.NormFloat64()
 
-	return &Unit{n, weights, bias, learningRate}
+	return &Unit{weights, bias, learningRate}
+}
+
+func dot(as, bs []float64) float64 {
+	sum := 0.
+
+	for i, a := range as {
+		sum += a * bs[i]
+	}
+
+	return sum
 }
 
 func (u *Unit) Feed(xs []float64) float64 {
-	sum := 0.
-
-	for i, w := range u.Weights {
-		sum += w * xs[i]
-	}
-
-	return sum + u.Bias
+	return dot(u.Weights, xs) + u.Bias
 }
 
-func (u *Unit) Step(delta float64, xs []float64) {
-	step := u.LearningRate * delta
+func (u *Unit) Step(gs []float64, step float64) {
+	alpha := u.LearningRate * step
 
-	for i, x := range xs {
-		u.Weights[i] += step * x
+	for i, g := range gs {
+		u.Weights[i] += alpha * g
 	}
 
-	u.Bias += step
+	u.Bias += alpha
 }
 
-type Block struct {
-	K int
+type Layer struct {
+	K     int
 	Units []*Unit
 }
 
-func NewBlock(k, n int, learningRate float64) *Block {
-	units := make([]*Unit, max(k, 0))
+func NewLayer(k, n int, learningRate float64) *Layer {
+	units := make([]*Unit, max(k, 1))
 
-	for i := range k {
+	for i := range units {
 		units[i] = New(n, learningRate)
 	}
 
-	return &Block{k, units}
+	return &Layer{len(units), units}
 }
 
-func (l *Block) Feed(xs []float64) []float64 {
+func (l *Layer) Feed(xs []float64) []float64 {
 	ys := make([]float64, l.K)
 
 	for i, unit := range l.Units {
@@ -66,8 +69,8 @@ func (l *Block) Feed(xs []float64) []float64 {
 	return ys
 }
 
-func (l *Block) Step(blockDelta float64, deltas []float64, xs []float64) {
+func (l *Layer) Step(gs []float64, ds []float64, alpha float64) {
 	for i, unit := range l.Units {
-		unit.Step(blockDelta * deltas[i], xs)
+		unit.Step(gs, ds[i]*alpha)
 	}
 }

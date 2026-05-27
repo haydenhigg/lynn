@@ -1,6 +1,9 @@
 package lynn
 
-import "math"
+import (
+	"math"
+	"slices"
+)
 
 func Sigmoid(z float64) float64 {
 	if z > 1e3 {
@@ -13,13 +16,7 @@ func Sigmoid(z float64) float64 {
 }
 
 func Softmax(zs []float64) []float64 {
-	maxZ := 0.
-
-	for _, z := range zs {
-		if z > maxZ {
-			maxZ = z
-		}
-	}
+	maxZ := slices.Max(zs)
 
 	ps := make([]float64, len(zs))
 	sum := 0.

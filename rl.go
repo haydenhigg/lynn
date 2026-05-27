@@ -8,27 +8,19 @@ type Transition struct {
 }
 
 type RL struct {
-	Actor *Block
-	Critic *Unit
+	Policy     *Layer
 	Trajectory []Transition
 }
 
-func NewRL(k, n int, actorLearningRate, criticLearningRate float64) *RL {
-	return &RL{
-		NewBlock(k, n, actorLearningRate),
-		New(n, criticLearningRate),
-		[]Transition{},
-	}
+func NewRL(policy *Layer) *RL {
+	return &RL{policy, []Transition{}}
 }
 
-// ps must sum to 1
-func sample(ps []float64) int {
+func probSample(ps []float64) int {
 	v := rand.Float64()
 
 	for i, p := range ps {
-		v -= p
-
-		if v < 0 {
+		if v -= p; v < 0 {
 			return i
 		}
 	}
@@ -36,32 +28,60 @@ func sample(ps []float64) int {
 	return -1
 }
 
-func (rl *RL) Act(state []float64) int {
-	ps := Softmax(rl.Actor.Feed(state))
-
-	action := sample(ps)
-	errors := make([]float64, len(ps))
+func probErrors(ps []float64, one int) []float64 {
+	es := make([]float64, len(ps))
 
 	for i, p := range ps {
-		if action == i {
-			errors[i] = 1 - p
+		if one == i {
+			es[i] = 1 - p
 		} else {
-			errors[i] = 0 - p
+			es[i] = 0 - p
 		}
 	}
 
-	rl.Trajectory = append(rl.Trajectory, Transition{state, errors})
+	return es
+}
+
+func (rl *RL) Act(state []float64) int {
+	ps := Softmax(rl.Policy.Feed(state))
+	action := probSample(ps)
+
+	rl.Trajectory = append(rl.Trajectory, Transition{
+		state,
+		probErrors(ps, action),
+	})
 
 	return action
 }
 
 func (rl *RL) Reward(reward float64) {
 	for _, transition := range rl.Trajectory {
-		advantage := reward - rl.Critic.Feed(transition.State)
-
-		rl.Actor.Step(advantage, transition.Errors, transition.State)
-		rl.Critic.Step(advantage, transition.State)
+		rl.Policy.Step(transition.State, transition.Errors, reward)
 	}
 
 	rl.Trajectory = []Transition{}
+}
+
+type A2C struct {
+	Actor  *RL
+	Critic *Unit
+}
+
+func NewA2C(policy *Layer, critic *Unit) *A2C {
+	return &A2C{NewRL(policy), critic}
+}
+
+func (a2c *A2C) Act(state []float64) int {
+	return a2c.Actor.Act(state)
+}
+
+func (a2c *A2C) Reward(reward float64) {
+	for _, transition := range a2c.Actor.Trajectory {
+		advantage := reward - a2c.Critic.Feed(transition.State)
+
+		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
+		a2c.Critic.Step(transition.State, advantage)
+	}
+
+	a2c.Actor.Trajectory = []Transition{}
 }
