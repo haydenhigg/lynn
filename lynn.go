@@ -12,10 +12,10 @@ func New(n int, learnRate float64) *Unit {
 	weights := make([]float64, max(n, 0))
 
 	for i := range n {
-		weights[i] = rand.NormFloat64()
+		weights[i] = rand.NormFloat64() * learnRate
 	}
 
-	bias := rand.NormFloat64()
+	bias := rand.NormFloat64() * learnRate
 
 	return &Unit{weights, bias, learnRate}
 }
@@ -69,8 +69,8 @@ func (l *Layer) Feed(xs []float64) []float64 {
 	return ys
 }
 
-func (l *Layer) Step(gs []float64, ds []float64, alpha float64) {
+func (l *Layer) Step(gs, ds []float64, step float64) {
 	for i, unit := range l.Units {
-		unit.Step(gs, ds[i]*alpha)
+		unit.Step(gs, ds[i]*step)
 	}
 }

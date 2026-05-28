@@ -74,8 +74,8 @@ type A2C struct {
 	Critic *Unit
 }
 
-func NewA2C(policy *Layer, critic *Unit, discountRate float64) *A2C {
-	return &A2C{NewRL(policy, discountRate), critic}
+func NewA2C(actor *RL, critic *Unit) *A2C {
+	return &A2C{actor, critic}
 }
 
 func (a2c *A2C) Act(state []float64) int {
