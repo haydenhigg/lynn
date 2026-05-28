@@ -1,6 +1,9 @@
 package lynn
 
-import "math/rand"
+import (
+	"math"
+	"math/rand"
+)
 
 type Transition struct {
 	State  []float64
@@ -8,12 +11,13 @@ type Transition struct {
 }
 
 type RL struct {
-	Policy     *Layer
-	Trajectory []Transition
+	Policy       *Layer
+	Trajectory   []Transition
+	DiscountRate float64
 }
 
-func NewRL(policy *Layer) *RL {
-	return &RL{policy, []Transition{}}
+func NewRL(policy *Layer, discountRate float64) *RL {
+	return &RL{policy, []Transition{}, discountRate}
 }
 
 func probSample(ps []float64) int {
@@ -55,8 +59,11 @@ func (rl *RL) Act(state []float64) int {
 }
 
 func (rl *RL) Reward(reward float64) {
-	for _, transition := range rl.Trajectory {
-		rl.Policy.Step(transition.State, transition.Errors, reward)
+	t := len(rl.Trajectory) - 1
+
+	for i, transition := range rl.Trajectory {
+		discount := math.Pow(rl.DiscountRate, float64(t-i))
+		rl.Policy.Step(transition.State, transition.Errors, reward*discount)
 	}
 
 	rl.Trajectory = []Transition{}
@@ -67,8 +74,8 @@ type A2C struct {
 	Critic *Unit
 }
 
-func NewA2C(policy *Layer, critic *Unit) *A2C {
-	return &A2C{NewRL(policy), critic}
+func NewA2C(policy *Layer, critic *Unit, discountRate float64) *A2C {
+	return &A2C{NewRL(policy, discountRate), critic}
 }
 
 func (a2c *A2C) Act(state []float64) int {
@@ -76,8 +83,11 @@ func (a2c *A2C) Act(state []float64) int {
 }
 
 func (a2c *A2C) Reward(reward float64) {
-	for _, transition := range a2c.Actor.Trajectory {
-		advantage := reward - a2c.Critic.Feed(transition.State)
+	t := len(a2c.Actor.Trajectory) - 1
+
+	for i, transition := range a2c.Actor.Trajectory {
+		discount := math.Pow(a2c.Actor.DiscountRate, float64(t-i))
+		advantage := reward*discount - a2c.Critic.Feed(transition.State)
 
 		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
 		a2c.Critic.Step(transition.State, advantage)
