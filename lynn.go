@@ -69,8 +69,8 @@ func (l *Layer) Feed(xs []float64) []float64 {
 	return ys
 }
 
-func (l *Layer) Step(gs, ds []float64, step float64) {
+func (l *Layer) Step(gs, unitGs []float64, step float64) {
 	for i, unit := range l.Units {
-		unit.Step(gs, ds[i]*step)
+		unit.Step(gs, unitGs[i]*step)
 	}
 }

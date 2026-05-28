@@ -18,7 +18,7 @@ type Unit struct {
 
 - `New(n int, learnRate float64) *Unit`: create a new Unit with `n` input dimension
 - `(*Unit).Feed(xs []float64) float64`: get the output of the model
-- `(*Unit).Step(gs []float64, step float64)`: perform a gradient ascent update where `step` is the coefficient of the gradient `gs`
+- `(*Unit).Step(gs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient and `step` is the coefficient of the gradient
 
 ***Note**: Remember to normalize or standardize your input features.*
 
@@ -35,7 +35,7 @@ type Layer struct {
 
 - `NewLayer(k, n int, learnRate float64) *Layer`: create a new Layer with `k` output dimensions and `n` input dimensions
 - `(*Layer).Feed(xs []float64) []float64`: get the output of the model
-- `(*Layer).Step(gs, ds []float64, step float64)`: perform a gradient ascent update where `step` is the coefficient of the gradient and `ds` are the unique coefficients of the gradient for each Unit
+- `(*Layer).Step(gs, unitGs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient, `unitGs` are the coefficients of the gradient for each Unit, and `step` is the coefficient of the gradient
 
 ## Logits
 
