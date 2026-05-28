@@ -16,7 +16,7 @@ The simplest linear model -- multiple inputs, one output.
 
 ### Layer
 
-A layer is a parellel group of Units -- multiple inputs, multiple outputs.
+A parellel group of Units -- multiple inputs, multiple outputs.
 
 - `NewLayer(k, n int, learnRate float64) *Layer` (k is the number of outputs, n is the number of inputs)
 - `(*Layer).Feed(xs []float64) float64`: get the raw output of the model
@@ -53,5 +53,6 @@ An advantage actor critic (A2C) harness for a Layer.
 
 ## To-Do
 
-- [ ] Set up a test with chrys/anthemum
+- [ ] Add temporal differencing to A2C
+- [ ] Add simple Q-learner
 - [ ] Add the Adam optimizer
