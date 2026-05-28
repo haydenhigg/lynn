@@ -1,6 +1,6 @@
 # lynn
 
-Linear modeling primitives and Reinforcement Learning (RL) algorithms in Go.
+Linear modeling primitives and reinforcement learning algorithms in Go.
 
 ## Primitives
 
