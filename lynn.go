@@ -8,10 +8,10 @@ type Unit struct {
 	LearnRate float64
 }
 
-func New(n int, learnRate float64) *Unit {
-	weights := make([]float64, max(n, 0))
+func New(d int, learnRate float64) *Unit {
+	weights := make([]float64, max(d, 0))
 
-	for i := range n {
+	for i := range d {
 		weights[i] = rand.NormFloat64() * learnRate
 	}
 
@@ -49,11 +49,11 @@ type Layer struct {
 	Units []*Unit
 }
 
-func NewLayer(k, n int, learnRate float64) *Layer {
+func NewLayer(k, d int, learnRate float64) *Layer {
 	units := make([]*Unit, max(k, 1))
 
 	for i := range units {
-		units[i] = New(n, learnRate)
+		units[i] = New(d, learnRate)
 	}
 
 	return &Layer{len(units), units}

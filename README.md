@@ -16,7 +16,7 @@ type Unit struct {
 }
 ```
 
-- `New(n int, learnRate float64) *Unit`: create a new Unit with `n` input dimension
+- `New(d int, learnRate float64) *Unit`: create a new Unit with `d` input dimension
 - `(*Unit).Feed(xs []float64) float64`: get the output of the model
 - `(*Unit).Step(gs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient and `step` is the coefficient of the gradient
 
@@ -33,7 +33,7 @@ type Layer struct {
 }
 ```
 
-- `NewLayer(k, n int, learnRate float64) *Layer`: create a new Layer with `k` output dimensions and `n` input dimensions
+- `NewLayer(k, d int, learnRate float64) *Layer`: create a new Layer with `k` output dimensions and `d` input dimensions
 - `(*Layer).Feed(xs []float64) []float64`: get the output of the model
 - `(*Layer).Step(gs, unitGs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient, `unitGs` are the coefficients of the gradient for each Unit, and `step` is the coefficient of the gradient
 
@@ -54,7 +54,7 @@ A vanilla REINFORCE-style training shell.
 - `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`
 - `(*RL).Reward(reward float64)`: apply a time-discounted reward for all actions taken since the last reward
 
-***Note**: Discount rate is gamma. Use `1` for no discounting.*
+***Note**: Discount rate is gamma. Use `1` for no discounting and `0` for full discounting (myopic). The normal range is `0.9` to `0.999`.*
 
 ### A2C
 
@@ -64,7 +64,7 @@ An Advantage Actor-Critic (A2C) training shell.
 - `(*A2C).Act(state []float64) int`: get an action in the range `[0, k - 1]`
 - `(*A2C).Reward(reward float64)`: apply a time-discounted reward for all actions taken since the last reward
 
-***Note**: The actor's policy and the critic should have the same number of input dimensions `n`. The actor's learning rate should be higher than the critic's.*
+***Note**: The actor's policy and the critic should have the same number of input dimensions `d`. The actor's learning rate should be higher than the critic's.*
 
 ## Examples
 

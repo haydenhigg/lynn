@@ -22,19 +22,30 @@ func Test_dot(t *testing.T) {
 
 func Test_New(t *testing.T) {
 	// given
-	expectedN := 3
+	expectedD := 3
 	expectedLearnRate := 0.1
 
 	// when
-	u := New(expectedN, expectedLearnRate)
+	u := New(expectedD, expectedLearnRate)
 
 	// then
-	if len(u.Weights) != expectedN {
-		t.Errorf("len(New(...).Weights) != %d: %d", expectedN, len(u.Weights))
+	if len(u.Weights) != expectedD {
+		t.Errorf("len(New(...).Weights) != %d: %d", expectedD, len(u.Weights))
 	}
 
 	if u.LearnRate != expectedLearnRate {
 		t.Errorf("New(...).LearnRate != %f: %f", expectedLearnRate, u.LearnRate)
+	}
+}
+
+func Test_New_negativeD(t *testing.T) {
+	// when
+	u := New(-2, 0.1)
+
+	// then
+	expectedD := 0
+	if len(u.Weights) != expectedD {
+		t.Errorf("len(New(...).Weights) != %d: %d", expectedD, len(u.Weights))
 	}
 }
 
@@ -94,6 +105,10 @@ func Test_NewLayer(t *testing.T) {
 		t.Errorf("NewLayer(...).K != %d: %d", expectedK, l.K)
 	}
 
+	if len(l.Units) != expectedK {
+		t.Errorf("len(NewLayer(...).Units) != %d: %d", expectedK, len(l.Units))
+	}
+
 	for i, u := range l.Units {
 		if len(u.Weights) != expectedN {
 			t.Errorf("len(NewLayer(...).Units[%d].Weights) != %d: %d", i, expectedN, len(u.Weights))
@@ -102,6 +117,21 @@ func Test_NewLayer(t *testing.T) {
 		if u.LearnRate != expectedLearnRate {
 			t.Errorf("NewLayer(...).Units[%d].LearnRate != %f: %f", i, expectedLearnRate, u.LearnRate)
 		}
+	}
+}
+
+func Test_NewLayer_nonPositiveK(t *testing.T) {
+	// when
+	l := NewLayer(0, 3, 0.1)
+
+	// then
+	expectedK := 1
+	if l.K != expectedK {
+		t.Errorf("NewLayer(...).K != %d: %d", expectedK, l.K)
+	}
+
+	if len(l.Units) != expectedK {
+		t.Errorf("len(NewLayer(...).Units) != %d: %d", expectedK, len(l.Units))
 	}
 }
 

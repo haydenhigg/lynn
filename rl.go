@@ -8,16 +8,17 @@ import (
 type Transition struct {
 	State  []float64
 	Errors []float64
+	Reward float64
 }
 
 type RL struct {
 	Policy       *Layer
-	Trajectory   []Transition
 	DiscountRate float64
+	Trajectory   []Transition
 }
 
 func NewRL(policy *Layer, discountRate float64) *RL {
-	return &RL{policy, []Transition{}, discountRate}
+	return &RL{policy, discountRate, []Transition{}}
 }
 
 func probSample(ps []float64) int {
@@ -51,8 +52,8 @@ func (rl *RL) Act(state []float64) int {
 	action := probSample(ps)
 
 	rl.Trajectory = append(rl.Trajectory, Transition{
-		state,
-		probErrors(ps, action),
+		State: state,
+		Errors: probErrors(ps, action),
 	})
 
 	return action
@@ -92,6 +93,8 @@ func (a2c *A2C) Reward(reward float64) {
 		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
 		a2c.Critic.Step(transition.State, advantage)
 	}
+}
 
+func (a2c *A2C) Learn() {
 	a2c.Actor.Trajectory = []Transition{}
 }
