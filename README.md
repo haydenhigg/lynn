@@ -33,9 +33,9 @@ type Layer struct {
 }
 ```
 
-- `NewLayer(k, d int, learnRate float64) *Layer`: create a new Layer with `k` output dimensions and `d` input dimensions
-- `(*Layer).Feed(xs []float64) []float64`: get the output of the model
-- `(*Layer).Step(gs, unitGs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient, `unitGs` are the coefficients of the gradient for each Unit, and `step` is the coefficient of the gradient
+- `NewLayer(k, d int, learnRate float64) *Layer`: create a new Layer with `k` output dimensions and `d` input dimensions.
+- `(*Layer).Feed(xs []float64) []float64`: get the output of the model.
+- `(*Layer).Step(gs, unitGs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient, `unitGs` are the coefficients of the gradient for each Unit, and `step` is the coefficient of the gradient.
 
 ## Logits
 
@@ -51,8 +51,8 @@ Two functions are provided to create logit models from a Unit or Layer.
 A vanilla REINFORCE-style training shell.
 
 - `NewRL(policy *Layer, discountRate float64) *RL`
-- `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`
-- `(*RL).Reward(reward float64)`: apply a time-discounted reward for all actions taken since the last reward
+- `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
+- `(*RL).Reward(reward float64)`: update the policy based on the reward, and empty the replay buffer.
 
 ***Note**: Discount rate is gamma. Use `1` for no discounting and `0` for full discounting (myopic). The normal range is `0.9` to `0.999`.*
 
@@ -61,8 +61,11 @@ A vanilla REINFORCE-style training shell.
 An Advantage Actor-Critic (A2C) training shell.
 
 - `NewA2C(actor *RL, critic *Unit) *A2C`
-- `(*A2C).Act(state []float64) int`: get an action in the range `[0, k - 1]`
-- `(*A2C).Reward(reward float64)`: apply a time-discounted reward for all actions taken since the last reward
+- `(*A2C).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
+- `(*A2C).Reward(reward float64)`: assign a reward to the most recent action.
+- `(*A2C).Learn()`: update the actor's policy and the critic based on all rewards, and empty the replay buffer.
+
+***Note**: If the environment provides dense rewards, assign a reward to every action. Otherwise, a single reward at the end of the episode is enough.*
 
 ***Note**: The actor's policy and the critic should have the same number of input dimensions `d`. The actor's learning rate should be higher than the critic's.*
 
@@ -83,6 +86,6 @@ for _ = range 500 {
 
 ## To-Do
 
-- [ ] Add temporal differencing to A2C
+- [x] Add temporal differencing to A2C
 - [ ] Add simple Q-learner
 - [ ] Add the Adam optimizer

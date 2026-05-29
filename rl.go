@@ -1,9 +1,6 @@
 package lynn
 
-import (
-	"math"
-	"math/rand"
-)
+import "math/rand"
 
 type Transition struct {
 	State  []float64
@@ -52,7 +49,7 @@ func (rl *RL) Act(state []float64) int {
 	action := probSample(ps)
 
 	rl.Trajectory = append(rl.Trajectory, Transition{
-		State: state,
+		State:  state,
 		Errors: probErrors(ps, action),
 	})
 
@@ -61,10 +58,13 @@ func (rl *RL) Act(state []float64) int {
 
 func (rl *RL) Reward(reward float64) {
 	t := len(rl.Trajectory) - 1
+	discountFactor := 1.
 
-	for i, transition := range rl.Trajectory {
-		discount := math.Pow(rl.DiscountRate, float64(t-i))
-		rl.Policy.Step(transition.State, transition.Errors, reward*discount)
+	for i := range rl.Trajectory {
+		transition := rl.Trajectory[t-i]
+		rl.Policy.Step(transition.State, transition.Errors, reward*discountFactor)
+
+		discountFactor *= rl.DiscountRate
 	}
 
 	rl.Trajectory = []Transition{}
@@ -85,16 +85,28 @@ func (a2c *A2C) Act(state []float64) int {
 
 func (a2c *A2C) Reward(reward float64) {
 	t := len(a2c.Actor.Trajectory) - 1
-
-	for i, transition := range a2c.Actor.Trajectory {
-		discount := math.Pow(a2c.Actor.DiscountRate, float64(t-i))
-		advantage := reward*discount - a2c.Critic.Feed(transition.State)
-
-		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
-		a2c.Critic.Step(transition.State, advantage)
+	if t >= 0 {
+		a2c.Actor.Trajectory[t].Reward = reward
 	}
 }
 
 func (a2c *A2C) Learn() {
+	t := len(a2c.Actor.Trajectory) - 1
+
+	for i := range a2c.Actor.Trajectory {
+		transition := a2c.Actor.Trajectory[t-i]
+		advantage := transition.Reward - a2c.Critic.Feed(transition.State)
+
+		if i != 0 {
+			nextTransition := a2c.Actor.Trajectory[t-i+1]
+			predNextReward := a2c.Critic.Feed(nextTransition.State)
+
+			advantage += a2c.Actor.DiscountRate * predNextReward
+		}
+
+		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
+		a2c.Critic.Step(transition.State, advantage)
+	}
+
 	a2c.Actor.Trajectory = []Transition{}
 }
