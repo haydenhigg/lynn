@@ -1,60 +1,89 @@
 package lynn
 
-import "math/rand"
+import (
+	"math"
+	"math/rand"
+)
 
 type Transition struct {
-	State  []float64
-	Errors []float64
-	Reward float64
-	Done   bool
+	State       []float64
+	ActionGrad  []float64
+	EntropyGrad []float64
+	Reward      float64
+	Done        bool
 }
 
 type RL struct {
-	Policy       *Layer
-	DiscountRate float64
-	Trajectory   []Transition
+	Policy     *Layer
+	Gamma      float64 // discount rate
+	Beta       float64 // exploration pressure
+	Trajectory []Transition
 }
 
-func NewRL(policy *Layer, discountRate float64) *RL {
-	return &RL{policy, discountRate, []Transition{}}
+func NewRL(policy *Layer, gamma, beta float64) *RL {
+	return &RL{policy, gamma, beta, []Transition{}}
 }
 
-func probSample(ps []float64) int {
+func sampleAction(ps []float64) int {
 	v := rand.Float64()
 
-	for i, p := range ps {
+	for action, p := range ps {
 		if v -= p; v < 0 {
-			return i
+			return action
 		}
 	}
 
-	return -1
-}
-
-func probErrors(ps []float64, one int) []float64 {
-	es := make([]float64, len(ps))
-
-	for i, p := range ps {
-		if one == i {
-			es[i] = 1 - p
-		} else {
-			es[i] = 0 - p
-		}
-	}
-
-	return es
+	return len(ps) - 1
 }
 
 func (rl *RL) Act(state []float64) int {
 	ps := Softmax(rl.Policy.Feed(state))
-	action := probSample(ps)
+	action := sampleAction(ps)
 
 	rl.Trajectory = append(rl.Trajectory, Transition{
-		State:  state,
-		Errors: probErrors(ps, action),
+		State:       state,
+		ActionGrad:  actionErrors(ps, action),
+		EntropyGrad: entropyErrors(ps),
 	})
 
 	return action
+}
+
+func actionErrors(ps []float64, action int) []float64 {
+	errors := make([]float64, len(ps))
+
+	for i, p := range ps {
+		if action == i {
+			errors[i] = 1 - p
+		} else {
+			errors[i] = 0 - p
+		}
+	}
+
+	return errors
+}
+
+func entropy(ps []float64) float64 {
+	entropy := 0.
+
+	for _, p := range ps {
+		if p > 0 {
+			entropy -= p * math.Log(p)
+		}
+	}
+
+	return entropy
+}
+
+func entropyErrors(ps []float64) []float64 {
+	h := entropy(ps)
+	errors := make([]float64, len(ps))
+
+	for i, p := range ps {
+		errors[i] = -p * (math.Log(p) + h)
+	}
+
+	return errors
 }
 
 func (rl *RL) Reward(reward float64) {
@@ -63,9 +92,11 @@ func (rl *RL) Reward(reward float64) {
 
 	for i := range rl.Trajectory {
 		transition := rl.Trajectory[t-i]
-		rl.Policy.Step(transition.State, transition.Errors, reward*discountFactor)
 
-		discountFactor *= rl.DiscountRate
+		rl.Policy.Step(transition.State, transition.ActionGrad, reward*discountFactor)
+		rl.Policy.Step(transition.State, transition.EntropyGrad, rl.Beta)
+
+		discountFactor *= rl.Gamma
 	}
 
 	rl.Trajectory = []Transition{}
@@ -91,7 +122,7 @@ func (a2c *A2C) Reward(reward float64) {
 	}
 }
 
-func (a2c *A2C) Done() {
+func (a2c *A2C) Finish() {
 	t := len(a2c.Actor.Trajectory) - 1
 	if t >= 0 {
 		a2c.Actor.Trajectory[t].Done = true
@@ -109,10 +140,11 @@ func (a2c *A2C) Learn() {
 			nextTransition := a2c.Actor.Trajectory[t-i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
-			advantage += a2c.Actor.DiscountRate * predNextReward
+			advantage += a2c.Actor.Gamma * predNextReward
 		}
 
-		a2c.Actor.Policy.Step(transition.State, transition.Errors, advantage)
+		a2c.Actor.Policy.Step(transition.State, transition.ActionGrad, advantage)
+		a2c.Actor.Policy.Step(transition.State, transition.EntropyGrad, a2c.Actor.Beta)
 		a2c.Critic.Step(transition.State, advantage)
 	}
 

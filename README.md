@@ -50,8 +50,9 @@ Two functions are provided to create logit models from a Unit or Layer.
 
 A vanilla REINFORCE-style training shell.
 
-- `NewRL(policy *Layer, discountRate float64) *RL`
-    - Discount rate is gamma. Use `1` for no discounting and `0` for full discounting (myopic). The normal range is `0.9` to `0.999`.
+- `NewRL(policy *Layer, gamma, beta float64) *RL`
+    - `gamma` is the discounting rate. Use `1` for no discounting (all future rewards matter equally) and `0` for full discounting (only immediate rewards matter). The normal range is `0.9` to `0.999`.
+    - `beta` is the exploration pressure. Use `0` for no entropy regularization.
 - `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
 - `(*RL).Reward(reward float64)`: update the policy based on the reward, and empty the replay buffer.
 
@@ -64,7 +65,7 @@ An Advantage Actor-Critic (A2C) training shell.
 - `(*A2C).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
 - `(*A2C).Reward(reward float64)`: assign a reward to the most recent action.
     - If the environment provides dense rewards, assign a reward to every action. Otherwise, a single reward at the end of an episode is enough.
-- `(*A2C).Done()`: mark the most recent transition as the end of an episode.
+- `(*A2C).Finish()`: mark the most recent transition as the end of an episode.
     - This is only necessary if completing multiple episodes within one learning batch. The last reward in a batch will always be treated as the end of an episode.
 - `(*A2C).Learn()`: update the actor's policy and the critic based on all rewards, and empty the replay buffer.
 
@@ -85,6 +86,7 @@ for _ = range 500 {
 
 ## To-Do
 
-- [ ] Add entropy regularization
+- [x] Use temporal differencing in A2C
+- [x] Add entropy regularization
 - [ ] Add simple Q-learner
 - [ ] Add the Adam optimizer
