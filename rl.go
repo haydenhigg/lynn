@@ -102,11 +102,11 @@ func (a2c *A2C) Learn() {
 	t := len(a2c.Actor.Trajectory) - 1
 
 	for i := range a2c.Actor.Trajectory {
-		transition := a2c.Actor.Trajectory[i]
+		transition := a2c.Actor.Trajectory[t-i]
 		advantage := transition.Reward - a2c.Critic.Feed(transition.State)
 
 		if !transition.Done && i < t {
-			nextTransition := a2c.Actor.Trajectory[i+1]
+			nextTransition := a2c.Actor.Trajectory[t-i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
 			advantage += a2c.Actor.DiscountRate * predNextReward
