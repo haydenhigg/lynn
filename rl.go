@@ -6,6 +6,7 @@ type Transition struct {
 	State  []float64
 	Errors []float64
 	Reward float64
+	Done   bool
 }
 
 type RL struct {
@@ -90,15 +91,22 @@ func (a2c *A2C) Reward(reward float64) {
 	}
 }
 
+func (a2c *A2C) Done() {
+	t := len(a2c.Actor.Trajectory) - 1
+	if t >= 0 {
+		a2c.Actor.Trajectory[t].Done = true
+	}
+}
+
 func (a2c *A2C) Learn() {
 	t := len(a2c.Actor.Trajectory) - 1
 
 	for i := range a2c.Actor.Trajectory {
-		transition := a2c.Actor.Trajectory[t-i]
+		transition := a2c.Actor.Trajectory[i]
 		advantage := transition.Reward - a2c.Critic.Feed(transition.State)
 
-		if i != 0 {
-			nextTransition := a2c.Actor.Trajectory[t-i+1]
+		if !transition.Done && i < t {
+			nextTransition := a2c.Actor.Trajectory[i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
 			advantage += a2c.Actor.DiscountRate * predNextReward
