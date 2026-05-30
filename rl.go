@@ -77,10 +77,12 @@ func entropy(ps []float64) float64 {
 
 func entropyErrors(ps []float64) []float64 {
 	h := entropy(ps)
+	normalizer := math.Log(float64(len(ps)))
+
 	errors := make([]float64, len(ps))
 
 	for i, p := range ps {
-		errors[i] = -p * (math.Log(p) + h)
+		errors[i] = -p * (math.Log(p) + h) / normalizer
 	}
 
 	return errors

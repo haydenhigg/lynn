@@ -1,6 +1,7 @@
 package lynn
 
 import "testing"
+import "fmt"
 
 func Test_NewRL(t *testing.T) {
 	// given
@@ -60,11 +61,13 @@ func Test_entropyErrors(t *testing.T) {
 	// when
 	es := entropyErrors(ps)
 
+	fmt.Println(es)
+
 	// then
 	expectedEs := []float64{
-		-0.125100605,
-		+0.135923670,
-		-0.010823064,
+		-0.113871478,
+		+0.123723056,
+		-0.009851577,
 	}
 	for i, e := range es {
 		if !almostEqual(e, expectedEs[i]) {
