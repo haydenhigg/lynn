@@ -46,7 +46,7 @@ func sign(x float64) float64 {
 	}
 }
 
-func (l *Linear) Step(gs []float64, step float64) {
+func (l *Linear) Step(gs []float64, step float64) *Linear {
 	for i, g := range gs {
 		l1Penalty := l.PenaltyL1Mix * sign(l.Weights[i])
 		l2Penalty := (1 - l.PenaltyL1Mix) * l.Weights[i]
@@ -56,11 +56,15 @@ func (l *Linear) Step(gs []float64, step float64) {
 	}
 
 	l.Bias += l.LearnRate * step
+
+	return l
 }
 
-func (l *Linear) Regularize(strength, l1Mix float64) {
+func (l *Linear) Regularize(strength, l1Mix float64) *Linear {
 	l.Penalty = strength
 	l.PenaltyL1Mix = l1Mix
+
+	return l
 }
 
 type LinearGroup struct {
@@ -88,14 +92,18 @@ func (lg *LinearGroup) Feed(xs []float64) []float64 {
 	return ys
 }
 
-func (lg *LinearGroup) Step(gs, unitGs []float64, step float64) {
+func (lg *LinearGroup) Step(gs, unitGs []float64, step float64) *LinearGroup {
 	for i, unit := range lg.Units {
 		unit.Step(gs, unitGs[i]*step)
 	}
+
+	return lg
 }
 
-func (lg *LinearGroup) Regularize(strength, l1Mix float64) {
+func (lg *LinearGroup) Regularize(strength, l1Mix float64) *LinearGroup {
 	for _, unit := range lg.Units {
 		unit.Regularize(strength, l1Mix)
 	}
+
+	return lg
 }

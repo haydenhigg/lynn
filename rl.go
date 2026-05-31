@@ -14,10 +14,10 @@ type Transition struct {
 }
 
 type RL struct {
-	Policy     *LinearGroup
-	Gamma      float64 // discount rate
-	Beta       float64 // exploration pressure
-	Trajectory []Transition
+	Policy          *LinearGroup
+	DiscountRate    float64
+	ExplorePressure float64
+	Trajectory      []Transition
 }
 
 func NewRL(policy *LinearGroup, gamma, beta float64) *RL {
@@ -88,7 +88,7 @@ func entropyErrors(ps []float64) []float64 {
 	return errors
 }
 
-func (rl *RL) Reward(reward float64) {
+func (rl *RL) Reward(reward float64) *RL {
 	t := len(rl.Trajectory) - 1
 	discountFactor := 1.
 
@@ -96,12 +96,14 @@ func (rl *RL) Reward(reward float64) {
 		transition := rl.Trajectory[t-i]
 
 		rl.Policy.Step(transition.State, transition.ActionGrad, reward*discountFactor)
-		rl.Policy.Step(transition.State, transition.EntropyGrad, rl.Beta)
+		rl.Policy.Step(transition.State, transition.EntropyGrad, rl.ExplorePressure)
 
-		discountFactor *= rl.Gamma
+		discountFactor *= rl.DiscountRate
 	}
 
 	rl.Trajectory = []Transition{}
+
+	return rl
 }
 
 type A2C struct {
@@ -117,21 +119,25 @@ func (a2c *A2C) Act(state []float64) int {
 	return a2c.Actor.Act(state)
 }
 
-func (a2c *A2C) Reward(reward float64) {
+func (a2c *A2C) Reward(reward float64) *A2C {
 	t := len(a2c.Actor.Trajectory) - 1
 	if t >= 0 {
 		a2c.Actor.Trajectory[t].Reward = reward
 	}
+
+	return a2c
 }
 
-func (a2c *A2C) Finish() {
+func (a2c *A2C) Finish() *A2C {
 	t := len(a2c.Actor.Trajectory) - 1
 	if t >= 0 {
 		a2c.Actor.Trajectory[t].Done = true
 	}
+
+	return a2c
 }
 
-func (a2c *A2C) Learn() {
+func (a2c *A2C) Learn() *A2C {
 	t := len(a2c.Actor.Trajectory) - 1
 
 	for i := range a2c.Actor.Trajectory {
@@ -142,13 +148,15 @@ func (a2c *A2C) Learn() {
 			nextTransition := a2c.Actor.Trajectory[t-i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
-			advantage += a2c.Actor.Gamma * predNextReward
+			advantage += a2c.Actor.DiscountRate * predNextReward
 		}
 
 		a2c.Actor.Policy.Step(transition.State, transition.ActionGrad, advantage)
-		a2c.Actor.Policy.Step(transition.State, transition.EntropyGrad, a2c.Actor.Beta)
+		a2c.Actor.Policy.Step(transition.State, transition.EntropyGrad, a2c.Actor.ExplorePressure)
 		a2c.Critic.Step(transition.State, advantage)
 	}
 
 	a2c.Actor.Trajectory = []Transition{}
+
+	return a2c
 }

@@ -6,23 +6,23 @@ import "fmt"
 func Test_NewRL(t *testing.T) {
 	// given
 	l := NewLinearGroup(3, 5, 1e-3)
-	expectedGamma := .99
-	expectedBeta := 1e-2
+	expectedDiscountRate := .99
+	expectedExplorePressure := 1e-2
 
 	// when
-	rl := NewRL(l, expectedGamma, expectedBeta)
+	rl := NewRL(l, expectedDiscountRate, expectedExplorePressure)
 
 	// then
 	if rl.Policy != l {
 		t.Errorf("NewRL(...).Policy != %+v: %+v", l, rl.Policy)
 	}
 
-	if rl.Gamma != expectedGamma {
-		t.Errorf("NewRL(...).Gamma != %f: %f", expectedGamma, rl.Gamma)
+	if rl.DiscountRate != expectedDiscountRate {
+		t.Errorf("NewRL(...).DiscountRate != %f: %f", expectedDiscountRate, rl.DiscountRate)
 	}
 
-	if rl.Beta != expectedBeta {
-		t.Errorf("NewRL(...).Beta != %f: %f", expectedBeta, rl.Beta)
+	if rl.ExplorePressure != expectedExplorePressure {
+		t.Errorf("NewRL(...).ExplorePressure != %f: %f", expectedExplorePressure, rl.ExplorePressure)
 	}
 }
 
