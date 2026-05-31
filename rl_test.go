@@ -5,7 +5,7 @@ import "fmt"
 
 func Test_NewRL(t *testing.T) {
 	// given
-	l := NewLayer(3, 5, 1e-3)
+	l := NewLinearGroup(3, 5, 1e-3)
 	expectedGamma := .99
 	expectedBeta := 1e-2
 

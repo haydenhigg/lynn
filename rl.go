@@ -14,13 +14,13 @@ type Transition struct {
 }
 
 type RL struct {
-	Policy     *Layer
+	Policy     *LinearGroup
 	Gamma      float64 // discount rate
 	Beta       float64 // exploration pressure
 	Trajectory []Transition
 }
 
-func NewRL(policy *Layer, gamma, beta float64) *RL {
+func NewRL(policy *LinearGroup, gamma, beta float64) *RL {
 	return &RL{policy, gamma, beta, []Transition{}}
 }
 
@@ -106,10 +106,10 @@ func (rl *RL) Reward(reward float64) {
 
 type A2C struct {
 	Actor  *RL
-	Critic *Unit
+	Critic *Linear
 }
 
-func NewA2C(actor *RL, critic *Unit) *A2C {
+func NewA2C(actor *RL, critic *Linear) *A2C {
 	return &A2C{actor, critic}
 }
 

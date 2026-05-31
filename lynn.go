@@ -2,22 +2,26 @@ package lynn
 
 import "math/rand"
 
-type Unit struct {
-	Weights   []float64
-	Bias      float64
-	LearnRate float64
+type Linear struct {
+	Weights      []float64
+	Bias         float64
+	LearnRate    float64
+	Penalty      float64
+	PenaltyL1Mix float64
 }
 
-func New(d int, learnRate float64) *Unit {
+func New(d int, learnRate float64) *Linear {
 	weights := make([]float64, max(d, 0))
 
 	for i := range d {
 		weights[i] = rand.NormFloat64() * learnRate
 	}
 
-	bias := rand.NormFloat64() * learnRate
-
-	return &Unit{weights, bias, learnRate}
+	return &Linear{
+		Weights:   weights,
+		Bias:      rand.NormFloat64() * learnRate,
+		LearnRate: learnRate,
+	}
 }
 
 func dot(as, bs []float64) float64 {
@@ -30,47 +34,68 @@ func dot(as, bs []float64) float64 {
 	return sum
 }
 
-func (u *Unit) Feed(xs []float64) float64 {
-	return dot(u.Weights, xs) + u.Bias
+func (l *Linear) Feed(xs []float64) float64 {
+	return dot(l.Weights, xs) + l.Bias
 }
 
-func (u *Unit) Step(gs []float64, step float64) {
-	alpha := u.LearnRate * step
+func sign(x float64) float64 {
+	if x >= 0 {
+		return 1
+	} else {
+		return 0
+	}
+}
 
+func (l *Linear) Step(gs []float64, step float64) {
 	for i, g := range gs {
-		u.Weights[i] += alpha * g
+		l1Penalty := l.PenaltyL1Mix * sign(l.Weights[i])
+		l2Penalty := (1 - l.PenaltyL1Mix) * l.Weights[i]
+		penalty := l.Penalty * (l1Penalty + l2Penalty)
+
+		l.Weights[i] += l.LearnRate*step*g - penalty
 	}
 
-	u.Bias += alpha
+	l.Bias += l.LearnRate * step
 }
 
-type Layer struct {
+func (l *Linear) Regularize(strength, l1Mix float64) {
+	l.Penalty = strength
+	l.PenaltyL1Mix = l1Mix
+}
+
+type LinearGroup struct {
 	K     int
-	Units []*Unit
+	Units []*Linear
 }
 
-func NewLayer(k, d int, learnRate float64) *Layer {
-	units := make([]*Unit, max(k, 1))
+func NewLinearGroup(k, d int, learnRate float64) *LinearGroup {
+	units := make([]*Linear, max(k, 1))
 
 	for i := range units {
 		units[i] = New(d, learnRate)
 	}
 
-	return &Layer{len(units), units}
+	return &LinearGroup{len(units), units}
 }
 
-func (l *Layer) Feed(xs []float64) []float64 {
-	ys := make([]float64, l.K)
+func (lg *LinearGroup) Feed(xs []float64) []float64 {
+	ys := make([]float64, lg.K)
 
-	for i, unit := range l.Units {
+	for i, unit := range lg.Units {
 		ys[i] = unit.Feed(xs)
 	}
 
 	return ys
 }
 
-func (l *Layer) Step(gs, unitGs []float64, step float64) {
-	for i, unit := range l.Units {
+func (lg *LinearGroup) Step(gs, unitGs []float64, step float64) {
+	for i, unit := range lg.Units {
 		unit.Step(gs, unitGs[i]*step)
+	}
+}
+
+func (lg *LinearGroup) Regularize(strength, l1Mix float64) {
+	for _, unit := range lg.Units {
+		unit.Regularize(strength, l1Mix)
 	}
 }

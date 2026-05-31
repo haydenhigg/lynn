@@ -49,9 +49,9 @@ func Test_New_negativeD(t *testing.T) {
 	}
 }
 
-func Test_Unit_Feed(t *testing.T) {
+func Test_Linear_Feed(t *testing.T) {
 	// given
-	u := &Unit{
+	u := &Linear{
 		Weights: []float64{1, -2, 3},
 		Bias:    -0.5,
 	}
@@ -62,13 +62,13 @@ func Test_Unit_Feed(t *testing.T) {
 	// then
 	expected := 2.8
 	if !almostEqual(y, expected) {
-		t.Errorf("(*Unit).Feed(...) != %f: %f", expected, y)
+		t.Errorf("(*Linear).Feed(...) != %f: %f", expected, y)
 	}
 }
 
-func Test_Unit_Step(t *testing.T) {
+func Test_Linear_Step(t *testing.T) {
 	// given
-	u := &Unit{
+	u := &Linear{
 		Weights:   []float64{0.2, -0.8, 1.5},
 		Bias:      -0.5,
 		LearnRate: 0.1,
@@ -81,65 +81,65 @@ func Test_Unit_Step(t *testing.T) {
 	expectedWeights := []float64{0.3, -1.4, 1.7}
 	for i, w := range u.Weights {
 		if !almostEqual(w, expectedWeights[i]) {
-			t.Errorf("(*Unit).Step(...).Weights[%d] != %f: %f", i, expectedWeights[i], w)
+			t.Errorf("(*Linear).Step(...).Weights[%d] != %f: %f", i, expectedWeights[i], w)
 		}
 	}
 
 	expectedBias := -0.3
 	if !almostEqual(u.Bias, expectedBias) {
-		t.Errorf("(*Unit).Step(...).Bias != %f: %f", expectedBias, u.Bias)
+		t.Errorf("(*Linear).Step(...).Bias != %f: %f", expectedBias, u.Bias)
 	}
 }
 
-func Test_NewLayer(t *testing.T) {
+func Test_NewLinearGroup(t *testing.T) {
 	// given
 	expectedK := 5
 	expectedN := 3
 	expectedLearnRate := 0.1
 
 	// when
-	l := NewLayer(expectedK, expectedN, expectedLearnRate)
+	l := NewLinearGroup(expectedK, expectedN, expectedLearnRate)
 
 	// then
 	if l.K != expectedK {
-		t.Errorf("NewLayer(...).K != %d: %d", expectedK, l.K)
+		t.Errorf("NewLinearGroup(...).K != %d: %d", expectedK, l.K)
 	}
 
 	if len(l.Units) != expectedK {
-		t.Errorf("len(NewLayer(...).Units) != %d: %d", expectedK, len(l.Units))
+		t.Errorf("len(NewLinearGroup(...).Units) != %d: %d", expectedK, len(l.Units))
 	}
 
 	for i, u := range l.Units {
 		if len(u.Weights) != expectedN {
-			t.Errorf("len(NewLayer(...).Units[%d].Weights) != %d: %d", i, expectedN, len(u.Weights))
+			t.Errorf("len(NewLinearGroup(...).Units[%d].Weights) != %d: %d", i, expectedN, len(u.Weights))
 		}
 
 		if u.LearnRate != expectedLearnRate {
-			t.Errorf("NewLayer(...).Units[%d].LearnRate != %f: %f", i, expectedLearnRate, u.LearnRate)
+			t.Errorf("NewLinearGroup(...).Units[%d].LearnRate != %f: %f", i, expectedLearnRate, u.LearnRate)
 		}
 	}
 }
 
-func Test_NewLayer_nonPositiveK(t *testing.T) {
+func Test_NewLinearGroup_nonPositiveK(t *testing.T) {
 	// when
-	l := NewLayer(0, 3, 0.1)
+	l := NewLinearGroup(0, 3, 0.1)
 
 	// then
 	expectedK := 1
 	if l.K != expectedK {
-		t.Errorf("NewLayer(...).K != %d: %d", expectedK, l.K)
+		t.Errorf("NewLinearGroup(...).K != %d: %d", expectedK, l.K)
 	}
 
 	if len(l.Units) != expectedK {
-		t.Errorf("len(NewLayer(...).Units) != %d: %d", expectedK, len(l.Units))
+		t.Errorf("len(NewLinearGroup(...).Units) != %d: %d", expectedK, len(l.Units))
 	}
 }
 
-func Test_Layer_Feed(t *testing.T) {
+func Test_LinearGroup_Feed(t *testing.T) {
 	// given
-	l := &Layer{
+	l := &LinearGroup{
 		K: 2,
-		Units: []*Unit{
+		Units: []*Linear{
 			{Weights: []float64{1, -2, 3}, Bias: -0.5},
 			{Weights: []float64{-1, 0.5, 2}, Bias: -1.5},
 		},
@@ -152,16 +152,16 @@ func Test_Layer_Feed(t *testing.T) {
 	expected := []float64{6.6, -3.1}
 	for i, y := range ys {
 		if !almostEqual(y, expected[i]) {
-			t.Errorf("(*Layer).Feed(...)[%d] != %f: %f", i, expected[i], y)
+			t.Errorf("(*LinearGroup).Feed(...)[%d] != %f: %f", i, expected[i], y)
 		}
 	}
 }
 
-func Test_Layer_Step(t *testing.T) {
+func Test_LinearGroup_Step(t *testing.T) {
 	// given
-	l := &Layer{
+	l := &LinearGroup{
 		K: 2,
-		Units: []*Unit{
+		Units: []*Linear{
 			{Weights: []float64{-3, -2, 1}, Bias: 0.5, LearnRate: 0.1},
 			{Weights: []float64{1, 2, -3}, Bias: -0.2, LearnRate: 0.2},
 		},
@@ -178,7 +178,7 @@ func Test_Layer_Step(t *testing.T) {
 	for i, u := range l.Units {
 		for j, w := range u.Weights {
 			if !almostEqual(w, expectedWeights[i][j]) {
-				t.Errorf("(*Layer).Step(...).Units[%d].Weights[%d] != %f: %f", i, j, expectedWeights[i][j], w)
+				t.Errorf("(*LinearGroup).Step(...).Units[%d].Weights[%d] != %f: %f", i, j, expectedWeights[i][j], w)
 			}
 		}
 	}
@@ -186,7 +186,7 @@ func Test_Layer_Step(t *testing.T) {
 	expectedBiases := []float64{0.9, -0.4}
 	for i, u := range l.Units {
 		if !almostEqual(u.Bias, expectedBiases[i]) {
-			t.Errorf("(*Layer).Step(...).Units[%d].Bias != %f: %f", i, expectedBiases[i], u.Bias)
+			t.Errorf("(*LinearGroup).Step(...).Units[%d].Bias != %f: %f", i, expectedBiases[i], u.Bias)
 		}
 	}
 }
