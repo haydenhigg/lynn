@@ -150,22 +150,6 @@ func (a2c *A2C) Finish() *A2C {
 	return a2c
 }
 
-func clipTo(norm float64, gs []float64, step float64) []float64 {
-	gsNorm := 0.
-
-	for _, g := range gs {
-		gsNorm += g * step
-	}
-
-	scale := norm / gsNorm
-
-	for i := range gs {
-		gs[i] *= scale
-	}
-
-	return gs
-}
-
 func (a2c *A2C) Learn() *A2C {
 	t := len(a2c.Actor.Trajectory) - 1
 
@@ -181,7 +165,7 @@ func (a2c *A2C) Learn() *A2C {
 		}
 
 		a2c.Actor.applyReward(transition, advantage)
-		a2c.Critic.Step(clipTo(0.5, transition.State, advantage), advantage)
+		a2c.Critic.Step(transition.State, advantage)
 	}
 
 	a2c.Actor.Trajectory = []Transition{}
