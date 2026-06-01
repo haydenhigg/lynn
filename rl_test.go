@@ -6,10 +6,9 @@ func Test_NewRL(t *testing.T) {
 	// given
 	l := NewLinearGroup(3, 5, 1e-3)
 	expectedDiscountRate := .99
-	expectedExplorePressure := 1e-2
 
 	// when
-	rl := NewRL(l, expectedDiscountRate, expectedExplorePressure)
+	rl := NewRL(l, expectedDiscountRate)
 
 	// then
 	if rl.Policy != l {
@@ -18,10 +17,6 @@ func Test_NewRL(t *testing.T) {
 
 	if rl.DiscountRate != expectedDiscountRate {
 		t.Errorf("NewRL(...).DiscountRate != %f: %f", expectedDiscountRate, rl.DiscountRate)
-	}
-
-	if rl.ExplorePressure != expectedExplorePressure {
-		t.Errorf("NewRL(...).ExplorePressure != %f: %f", expectedExplorePressure, rl.ExplorePressure)
 	}
 }
 

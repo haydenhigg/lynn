@@ -20,8 +20,12 @@ type RL struct {
 	Trajectory      []Transition
 }
 
-func NewRL(policy *LinearGroup, discountRate, explorePressure float64) *RL {
-	return &RL{policy, discountRate, explorePressure, []Transition{}}
+func NewRL(policy *LinearGroup, discountRate float64) *RL {
+	return &RL{
+		Policy:       policy,
+		DiscountRate: discountRate,
+		Trajectory:   []Transition{},
+	}
 }
 
 func sampleAction(ps []float64) int {
@@ -90,7 +94,10 @@ func (rl *RL) Act(state []float64) int {
 
 func (rl *RL) applyReward(transition Transition, reward float64) {
 	rl.Policy.Step(transition.State, transition.ActionGradient, reward)
-	rl.Policy.Step(transition.State, transition.EntropyGradient, rl.ExplorePressure)
+
+	if rl.ExplorePressure > 0 {
+		rl.Policy.Step(transition.State, transition.EntropyGradient, rl.ExplorePressure)
+	}
 }
 
 func (rl *RL) Reward(reward float64) *RL {
@@ -104,6 +111,11 @@ func (rl *RL) Reward(reward float64) *RL {
 
 	rl.Trajectory = []Transition{}
 
+	return rl
+}
+
+func (rl *RL) Regularize(strength float64) *RL {
+	rl.ExplorePressure = strength
 	return rl
 }
 
@@ -138,6 +150,22 @@ func (a2c *A2C) Finish() *A2C {
 	return a2c
 }
 
+func clipTo(norm float64, gs []float64, step float64) []float64 {
+	gsNorm := 0.
+
+	for _, g := range gs {
+		gsNorm += g * step
+	}
+
+	scale := norm / gsNorm
+
+	for i := range gs {
+		gs[i] *= scale
+	}
+
+	return gs
+}
+
 func (a2c *A2C) Learn() *A2C {
 	t := len(a2c.Actor.Trajectory) - 1
 
@@ -153,7 +181,7 @@ func (a2c *A2C) Learn() *A2C {
 		}
 
 		a2c.Actor.applyReward(transition, advantage)
-		a2c.Critic.Step(transition.State, advantage)
+		a2c.Critic.Step(clipTo(0.5, transition.State, advantage), advantage)
 	}
 
 	a2c.Actor.Trajectory = []Transition{}

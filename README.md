@@ -16,10 +16,13 @@ type Linear struct {
 }
 ```
 
-- `New(d int, learnRate float64) *Linear`: create a new Linear with `d` input dimension.
+- `New(d int, learnRate float64) *Linear`
+    - `d`: number of input dimensions
 - `(*Linear).Feed(xs []float64) float64`: get the output of the model.
-- `(*Linear).Step(gs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient and `step` is the coefficient of the gradient.
-- `(*Linear).Regularize(strength, l1Mix float64) float64`: apply L1/L2 regularization when `.Step` is called.
+- `(*Linear).Step(gs []float64, step float64) *Linear`: perform a gradient ascent update.
+    - `gs`: gradient
+    - `step`: coefficient of the gradient
+- `(*Linear).Regularize(strength, l1Mix float64) *Linear`: apply L1/L2 regularization when `.Step` is called.
 
 ***Note**: Remember to normalize or standardize your input features.*
 
@@ -34,10 +37,15 @@ type LinearGroup struct {
 }
 ```
 
-- `NewLinearGroup(k, d int, learnRate float64) *LinearGroup`: create a new LinearGroup with `k` output dimensions and `d` input dimensions.
+- `NewLinearGroup(k, d int, learnRate float64) *LinearGroup`
+    - `k`: number of output dimensions
+    - `d`: number of input dimensions
 - `(*LinearGroup).Feed(xs []float64) []float64`: get the output of the model.
-- `(*LinearGroup).Step(gs, unitGs []float64, step float64)`: perform a gradient ascent update where `gs` is the gradient, `unitGs` are the coefficients of the gradient for each Linear, and `step` is the coefficient of the gradient.
-- `(*LinearGroup).Regularize(strength, l1Mix float64) float64`: apply L1/L2 regularization when `.Step` is called.
+- `(*LinearGroup).Step(gs, unitGs []float64, step float64) *LinearGroup`: perform a gradient ascent update.
+    - `gs`:the gradient
+    - `unitGs`: unique coefficients of the gradient per Unit
+    - `step`: coefficient of the gradient
+- `(*LinearGroup).Regularize(strength, l1Mix float64) *LinearGroup`: apply L1/L2 regularization.
 
 ## Logit Functions
 
@@ -52,11 +60,11 @@ Two functions to create logit models from a Linear or LinearGroup.
 
 A vanilla REINFORCE-style training shell.
 
-- `NewRL(policy *LinearGroup, discountRate, explorationPressure float64) *RL`
-    - `discountRate` tunes the reward time horizon. Use `1` for no discounting (all future rewards matter equally) and `0` for full discounting (only immediate rewards matter). The normal range is `0.9` to `0.999`.
-    - `explorationPressure` tunes the amount of entropy regularization. Use `0` for no regularization.
+- `NewRL(policy *LinearGroup, discountRate float64) *RL`
+    - Use `1` for `discountRate` if all future rewards matter equally, `0` if only immediate rewards matter, and anything in between. The normal range is `0.9` to `0.999`.
 - `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
-- `(*RL).Reward(reward float64)`: update the policy based on the reward, and empty the replay buffer.
+- `(*RL).Reward(reward float64) *RL`: update the policy based on the reward, and empty the replay buffer.
+- `(*RL).Regularize(strength float64) *RL`: apply entropy regularization.
 
 ### A2C
 

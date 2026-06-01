@@ -63,7 +63,6 @@ func (l *Linear) Step(gs []float64, step float64) *Linear {
 func (l *Linear) Regularize(strength, l1Mix float64) *Linear {
 	l.Penalty = strength
 	l.PenaltyL1Mix = l1Mix
-
 	return l
 }
 
@@ -79,7 +78,10 @@ func NewLinearGroup(k, d int, learnRate float64) *LinearGroup {
 		units[i] = New(d, learnRate)
 	}
 
-	return &LinearGroup{len(units), units}
+	return &LinearGroup{
+		K:     len(units),
+		Units: units,
+	}
 }
 
 func (lg *LinearGroup) Feed(xs []float64) []float64 {
