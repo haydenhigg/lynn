@@ -52,9 +52,9 @@ Two functions to create logit models from a Linear or LinearGroup.
 
 A vanilla REINFORCE-style training shell.
 
-- `NewRL(policy *LinearGroup, gamma, beta float64) *RL`
-    - `gamma` is the discounting rate. Use `1` for no discounting (all future rewards matter equally) and `0` for full discounting (only immediate rewards matter). The normal range is `0.9` to `0.999`.
-    - `beta` is the exploration pressure. Use `0` for no entropy regularization.
+- `NewRL(policy *LinearGroup, discountRate, explorationPressure float64) *RL`
+    - `discountRate` tunes the reward time horizon. Use `1` for no discounting (all future rewards matter equally) and `0` for full discounting (only immediate rewards matter). The normal range is `0.9` to `0.999`.
+    - `explorationPressure` tunes the amount of entropy regularization. Use `0` for no regularization.
 - `(*RL).Act(state []float64) int`: get an action in the range `[0, k - 1]`.
 - `(*RL).Reward(reward float64)`: update the policy based on the reward, and empty the replay buffer.
 
@@ -76,20 +76,18 @@ An Advantage Actor-Critic (A2C) training shell.
 ### Logistic Regression
 
 ```go
-l := lynn.New(3, 1e-3)
-l.Regularize(0.1, 0.5)
+model := lynn.New(3, 1e-3).Regularize(0.1, 0.5)
 
 for _ = range 50 {
 	for i, xs := range inputs {
-		prediction := lynn.Sigmoid(l.Feed(xs))
-		l.Step(xs, outputs[i]-prediction) // gradient ascent
+		prediction := lynn.Sigmoid(model.Feed(xs))
+		model.Step(xs, outputs[i]-prediction) // gradient ascent
 	}
 }
 ```
 
 ## To-Do
 
-- [x] Use temporal differencing in A2C
-- [x] Add entropy regularization
-- [ ] Add simple Q-learner
+- [ ] Add Soft Actor-Critic (SAC)
 - [ ] Add the Adam optimizer
+- [ ] Add simple Q-learner?

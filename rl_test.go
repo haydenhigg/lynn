@@ -1,7 +1,6 @@
 package lynn
 
 import "testing"
-import "fmt"
 
 func Test_NewRL(t *testing.T) {
 	// given
@@ -60,8 +59,6 @@ func Test_entropyErrors(t *testing.T) {
 
 	// when
 	es := entropyErrors(ps)
-
-	fmt.Println(es)
 
 	// then
 	expectedEs := []float64{

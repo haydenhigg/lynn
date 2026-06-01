@@ -6,11 +6,11 @@ import (
 )
 
 type Transition struct {
-	State       []float64
-	ActionGrad  []float64
-	EntropyGrad []float64
-	Reward      float64
-	Done        bool
+	State           []float64
+	ActionGradient  []float64
+	EntropyGradient []float64
+	Reward          float64
+	Done            bool
 }
 
 type RL struct {
@@ -20,8 +20,8 @@ type RL struct {
 	Trajectory      []Transition
 }
 
-func NewRL(policy *LinearGroup, gamma, beta float64) *RL {
-	return &RL{policy, gamma, beta, []Transition{}}
+func NewRL(policy *LinearGroup, discountRate, explorePressure float64) *RL {
+	return &RL{policy, discountRate, explorePressure, []Transition{}}
 }
 
 func sampleAction(ps []float64) int {
@@ -34,19 +34,6 @@ func sampleAction(ps []float64) int {
 	}
 
 	return len(ps) - 1
-}
-
-func (rl *RL) Act(state []float64) int {
-	ps := Softmax(rl.Policy.Feed(state))
-	action := sampleAction(ps)
-
-	rl.Trajectory = append(rl.Trajectory, Transition{
-		State:       state,
-		ActionGrad:  actionErrors(ps, action),
-		EntropyGrad: entropyErrors(ps),
-	})
-
-	return action
 }
 
 func actionErrors(ps []float64, action int) []float64 {
@@ -88,16 +75,30 @@ func entropyErrors(ps []float64) []float64 {
 	return errors
 }
 
+func (rl *RL) Act(state []float64) int {
+	ps := Softmax(rl.Policy.Feed(state))
+	action := sampleAction(ps)
+
+	rl.Trajectory = append(rl.Trajectory, Transition{
+		State:           state,
+		ActionGradient:  actionErrors(ps, action),
+		EntropyGradient: entropyErrors(ps),
+	})
+
+	return action
+}
+
+func (rl *RL) applyReward(transition Transition, reward float64) {
+	rl.Policy.Step(transition.State, transition.ActionGradient, reward)
+	rl.Policy.Step(transition.State, transition.EntropyGradient, rl.ExplorePressure)
+}
+
 func (rl *RL) Reward(reward float64) *RL {
 	t := len(rl.Trajectory) - 1
 	discountFactor := 1.
 
 	for i := range rl.Trajectory {
-		transition := rl.Trajectory[t-i]
-
-		rl.Policy.Step(transition.State, transition.ActionGrad, reward*discountFactor)
-		rl.Policy.Step(transition.State, transition.EntropyGrad, rl.ExplorePressure)
-
+		rl.applyReward(rl.Trajectory[t-i], reward*discountFactor)
 		discountFactor *= rl.DiscountRate
 	}
 
@@ -151,8 +152,7 @@ func (a2c *A2C) Learn() *A2C {
 			advantage += a2c.Actor.DiscountRate * predNextReward
 		}
 
-		a2c.Actor.Policy.Step(transition.State, transition.ActionGrad, advantage)
-		a2c.Actor.Policy.Step(transition.State, transition.EntropyGrad, a2c.Actor.ExplorePressure)
+		a2c.Actor.applyReward(transition, advantage)
 		a2c.Critic.Step(transition.State, advantage)
 	}
 
