@@ -3,6 +3,7 @@ package lynn
 import "math/rand"
 
 type Linear struct {
+	D            int
 	Weights      []float64
 	Bias         float64
 	LearnRate    float64
@@ -18,6 +19,7 @@ func New(d int, learnRate float64) *Linear {
 	}
 
 	return &Linear{
+		D: len(weights),
 		Weights:   weights,
 		Bias:      rand.NormFloat64() * learnRate,
 		LearnRate: learnRate,

@@ -29,6 +29,10 @@ func Test_New(t *testing.T) {
 	u := New(expectedD, expectedLearnRate)
 
 	// then
+	if u.D != expectedD {
+		t.Errorf("New(...).D != %d: %d", expectedD, u.D)
+	}
+
 	if len(u.Weights) != expectedD {
 		t.Errorf("len(New(...).Weights) != %d: %d", expectedD, len(u.Weights))
 	}
@@ -44,6 +48,10 @@ func Test_New_negativeD(t *testing.T) {
 
 	// then
 	expectedD := 0
+	if u.D != expectedD {
+		t.Errorf("New(...).D != %d: %d", expectedD, u.D)
+	}
+
 	if len(u.Weights) != expectedD {
 		t.Errorf("len(New(...).Weights) != %d: %d", expectedD, len(u.Weights))
 	}
