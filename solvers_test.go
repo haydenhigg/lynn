@@ -29,8 +29,8 @@ func Test_GradientSolver_Ascend_regularized(t *testing.T) {
 	l := New(3)
 	gs := NewGradientSolver(1e-1)
 
-	gs.L1Penalty = 0.04
-	gs.L2Penalty = 0.06
+	gs.L1Penalty = 0.4
+	gs.L2Penalty = 0.6
 
 	// when
 	gs.Ascend(l, []float64{1, 2, 3}, 0.5)

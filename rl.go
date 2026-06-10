@@ -106,7 +106,7 @@ func (rl *RL) applyReward(transition Transition, reward float64) {
 		rl.Policy.Step(
 			transition.State,
 			transition.EntropyGradient,
-			rl.ExplorePressure*rl.LearnRate,
+			rl.LearnRate*rl.ExplorePressure,
 		)
 	}
 }
@@ -177,11 +177,11 @@ func (a2c *A2C) Learn() *A2C {
 			nextTransition := a2c.Actor.Trajectory[t-i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
-			advantage += predNextReward * a2c.Actor.DiscountRate
+			advantage += a2c.Actor.DiscountRate * predNextReward
 		}
 
 		a2c.Actor.applyReward(transition, advantage)
-		a2c.Critic.Step(transition.State, advantage*a2c.LearnRate)
+		a2c.Critic.Step(transition.State, a2c.LearnRate*advantage)
 	}
 
 	a2c.Actor.Trajectory = []Transition{}

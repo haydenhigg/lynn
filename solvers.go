@@ -39,11 +39,14 @@ func sign(x float64) float64 {
 func (gs *GradientSolver) Ascend(l *Linear, xs []float64, scale float64) *GradientSolver {
 	if gs.L1Penalty != 0 || gs.L2Penalty != 0 {
 		for i, w := range l.Weights {
-			l.Weights[i] -= gs.L1Penalty*sign(w) + gs.L2Penalty*w
+			l1Penalty := gs.L1Penalty * sign(w)
+			l2Penalty := gs.L2Penalty * w
+
+			l.Weights[i] -= gs.LearnRate * (l1Penalty + l2Penalty)
 		}
 	}
 
-	l.Step(xs, scale*gs.LearnRate)
+	l.Step(xs, gs.LearnRate*scale)
 
 	return gs
 }
