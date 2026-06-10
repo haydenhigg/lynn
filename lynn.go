@@ -19,7 +19,7 @@ func New(d int, learnRate float64) *Linear {
 	}
 
 	return &Linear{
-		D: len(weights),
+		D:         len(weights),
 		Weights:   weights,
 		Bias:      rand.NormFloat64() * learnRate,
 		LearnRate: learnRate,
