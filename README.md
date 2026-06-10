@@ -84,7 +84,8 @@ An Advantage Actor-Critic (A2C) training shell.
 ### Logistic Regression
 
 ```go
-model := lynn.New(3, 1e-3).Regularize(0.1, 0.5)
+model := lynn.New(3)
+solver := lynn.NewGradientSolver(1e-3)
 
 for _ = range 50 {
 	for i, xs := range inputs {

@@ -3,27 +3,27 @@ package lynn
 import "math/rand"
 
 type Linear struct {
-	D            int
-	Weights      []float64
-	Bias         float64
-	LearnRate    float64
-	Penalty      float64
-	PenaltyL1Mix float64
+	D       int
+	Weights []float64
+	Bias    float64
 }
 
-func New(d int, learnRate float64) *Linear {
+func New(d int) *Linear {
 	weights := make([]float64, max(d, 0))
-
-	for i := range d {
-		weights[i] = rand.NormFloat64() * learnRate
-	}
-
 	return &Linear{
-		D:         len(weights),
-		Weights:   weights,
-		Bias:      rand.NormFloat64() * learnRate,
-		LearnRate: learnRate,
+		D:       len(weights),
+		Weights: weights,
 	}
+}
+
+func (l *Linear) Randomize(mu, sigma float64) *Linear {
+	for i := range l.D {
+		l.Weights[i] = rand.NormFloat64()*sigma + mu
+	}
+
+	l.Bias = rand.NormFloat64()*sigma + mu
+
+	return l
 }
 
 func dot(as, bs []float64) float64 {
@@ -40,31 +40,13 @@ func (l *Linear) Feed(xs []float64) float64 {
 	return dot(l.Weights, xs) + l.Bias
 }
 
-func sign(x float64) float64 {
-	if x >= 0 {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func (l *Linear) Step(gs []float64, step float64) *Linear {
-	for i, g := range gs {
-		l1Penalty := l.PenaltyL1Mix * sign(l.Weights[i])
-		l2Penalty := (1 - l.PenaltyL1Mix) * l.Weights[i]
-		penalty := l.Penalty * (l1Penalty + l2Penalty)
-
-		l.Weights[i] += l.LearnRate*step*g - penalty
+func (l *Linear) Step(xs []float64, scale float64) *Linear {
+	for i, x := range xs {
+		l.Weights[i] += scale * x
 	}
 
-	l.Bias += l.LearnRate * step
+	l.Bias += scale
 
-	return l
-}
-
-func (l *Linear) Regularize(strength, l1Mix float64) *Linear {
-	l.Penalty = strength
-	l.PenaltyL1Mix = l1Mix
 	return l
 }
 
@@ -73,11 +55,11 @@ type LinearGroup struct {
 	Units []*Linear
 }
 
-func NewLinearGroup(k, d int, learnRate float64) *LinearGroup {
+func NewLinearGroup(k, d int) *LinearGroup {
 	units := make([]*Linear, max(k, 1))
 
 	for i := range units {
-		units[i] = New(d, learnRate)
+		units[i] = New(d)
 	}
 
 	return &LinearGroup{
@@ -96,17 +78,9 @@ func (lg *LinearGroup) Feed(xs []float64) []float64 {
 	return ys
 }
 
-func (lg *LinearGroup) Step(gs, unitGs []float64, step float64) *LinearGroup {
+func (lg *LinearGroup) Step(xs, us []float64, scale float64) *LinearGroup {
 	for i, unit := range lg.Units {
-		unit.Step(gs, unitGs[i]*step)
-	}
-
-	return lg
-}
-
-func (lg *LinearGroup) Regularize(strength, l1Mix float64) *LinearGroup {
-	for _, unit := range lg.Units {
-		unit.Regularize(strength, l1Mix)
+		unit.Step(xs, us[i]*scale)
 	}
 
 	return lg

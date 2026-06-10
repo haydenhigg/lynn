@@ -15,17 +15,24 @@ type Transition struct {
 
 type RL struct {
 	Policy          *LinearGroup
+	LearnRate       float64
 	DiscountRate    float64
 	ExplorePressure float64
 	Trajectory      []Transition
 }
 
-func NewRL(policy *LinearGroup, discountRate float64) *RL {
+func NewRL(policy *LinearGroup, learnRate, discountRate float64) *RL {
 	return &RL{
 		Policy:       policy,
+		LearnRate:    learnRate,
 		DiscountRate: discountRate,
 		Trajectory:   []Transition{},
 	}
+}
+
+func (rl *RL) Regularize(strength float64) *RL {
+	rl.ExplorePressure = strength
+	return rl
 }
 
 func sampleAction(ps []float64) int {
@@ -93,10 +100,14 @@ func (rl *RL) Act(state []float64) int {
 }
 
 func (rl *RL) applyReward(transition Transition, reward float64) {
-	rl.Policy.Step(transition.State, transition.ActionGradient, reward)
+	rl.Policy.Step(transition.State, transition.ActionGradient, reward*rl.LearnRate)
 
 	if rl.ExplorePressure > 0 {
-		rl.Policy.Step(transition.State, transition.EntropyGradient, rl.ExplorePressure)
+		rl.Policy.Step(
+			transition.State,
+			transition.EntropyGradient,
+			rl.ExplorePressure*rl.LearnRate,
+		)
 	}
 }
 
@@ -114,18 +125,23 @@ func (rl *RL) Reward(reward float64) *RL {
 	return rl
 }
 
-func (rl *RL) Regularize(strength float64) *RL {
-	rl.ExplorePressure = strength
-	return rl
-}
-
 type A2C struct {
-	Actor  *RL
-	Critic *Linear
+	Actor     *RL
+	Critic    *Linear
+	LearnRate float64
 }
 
-func NewA2C(actor *RL, critic *Linear) *A2C {
-	return &A2C{actor, critic}
+func NewA2C(actor *RL, learnRate float64) *A2C {
+	d := 0
+	if actor.Policy.K > 0 {
+		d = actor.Policy.Units[0].D
+	}
+
+	return &A2C{
+		Actor:     actor,
+		Critic:    New(d),
+		LearnRate: learnRate,
+	}
 }
 
 func (a2c *A2C) Act(state []float64) int {
@@ -161,11 +177,11 @@ func (a2c *A2C) Learn() *A2C {
 			nextTransition := a2c.Actor.Trajectory[t-i+1]
 			predNextReward := a2c.Critic.Feed(nextTransition.State)
 
-			advantage += a2c.Actor.DiscountRate * predNextReward
+			advantage += predNextReward * a2c.Actor.DiscountRate
 		}
 
 		a2c.Actor.applyReward(transition, advantage)
-		a2c.Critic.Step(transition.State, advantage)
+		a2c.Critic.Step(transition.State, advantage*a2c.LearnRate)
 	}
 
 	a2c.Actor.Trajectory = []Transition{}

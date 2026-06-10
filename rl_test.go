@@ -4,11 +4,11 @@ import "testing"
 
 func Test_NewRL(t *testing.T) {
 	// given
-	l := NewLinearGroup(3, 5, 1e-3)
+	l := NewLinearGroup(3, 5)
 	expectedDiscountRate := .99
 
 	// when
-	rl := NewRL(l, expectedDiscountRate)
+	rl := NewRL(l, 1e-3, expectedDiscountRate)
 
 	// then
 	if rl.Policy != l {
